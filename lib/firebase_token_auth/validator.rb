@@ -2,13 +2,13 @@ module FirebaseTokenAuth
   class Validator
     ISSUER_BASE_URL = 'https://securetoken.google.com/'.freeze
 
-    def validate(project_id, decoded_jwt)
+    def validate(project_id, decoded_jwt, use_emulator: false)
       # ref. https://github.com/firebase/firebase-admin-node/blob/488f9318350c6b46af2e93b99907b9a02f170029/src/auth/token-verifier.ts
       payload = decoded_jwt[0]
       header = decoded_jwt[1]
       issuer = ISSUER_BASE_URL + project_id
-      raise ValidationError, 'Firebase ID token has no "kid" claim.' unless header['kid']
-      raise ValidationError, "Firebase ID token has incorrect algorithm. Expected \"#{ALGORITHM}\" but got \"#{header['alg']}\"." unless header['alg'] == ALGORITHM
+      raise ValidationError, 'Firebase ID token has no "kid" claim.' unless header['kid'] || use_emulator
+      raise ValidationError, "Firebase ID token has incorrect algorithm. Expected \"#{ALGORITHM}\" but got \"#{header['alg']}\"." unless header['alg'] == ALGORITHM || use_emulator
       raise ValidationError, "Firebase ID token has incorrect \"aud\" (audience) claim. Expected \"#{project_id}\" but got \"#{payload['aud']}\"." unless payload['aud'] == project_id
       raise ValidationError, "Firebase ID token has \"iss\" (issuer) claim. Expected \"#{issuer}\" but got \"#{payload['iss']}\"." unless payload['iss'] == issuer
       raise ValidationError, 'Firebase ID token has no "sub" (subject) claim.' unless payload['sub'].is_a?(String)

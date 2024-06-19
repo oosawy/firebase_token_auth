@@ -3,7 +3,7 @@ require 'openssl'
 
 module FirebaseTokenAuth
   class Configuration
-    attr_accessor :project_id, :json_key_io, :exp_leeway, :private_key, :client_email, :scope, :auth
+    attr_accessor :project_id, :json_key_io, :exp_leeway, :private_key, :client_email, :scope, :auth, :emulator_host
 
     def initialize
       @project_id = nil
@@ -25,6 +25,9 @@ module FirebaseTokenAuth
 
     def prepare
       raise ConfigurationError, 'project_id is required to use firebase_token_auth gem.' unless project_id
+
+      @emulator_host = ENV['FIREBASE_AUTH_EMULATOR_HOST']
+
       return unless configured_for_custom_token?
 
       @auth = if json_key_io

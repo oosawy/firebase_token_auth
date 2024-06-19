@@ -28,9 +28,14 @@ module FirebaseTokenAuth
     def verify_id_token(id_token, options = {})
       raise ArgumentError, 'Firebase ID token must not null or blank strings.' if id_token.nil? || id_token.empty?
 
+      use_emulator = !configuration.emulator_host.nil?
+
       public_key_id, decoded_jwt = validator.extract_kid(id_token)
+      validator.validate(configuration.project_id, decoded_jwt, use_emulator: use_emulator)
+
+      return IdTokenResult.new(decoded_jwt[0]['sub'], IdToken.new(decoded_jwt[0], decoded_jwt[1])) if use_emulator
+
       public_key_manager.refresh_publickeys!
-      validator.validate(configuration.project_id, decoded_jwt)
       default_options = { algorithm: ALGORITHM, verify_iat: true, verify_expiration: true, exp_leeway: configuration.exp_leeway }
       raise ValidationError, 'Public key may have expired.' unless public_key_manager.public_keys.include?(public_key_id)
       jwt = JWT.decode(id_token, public_key_manager.public_keys[public_key_id].public_key, true, default_options.merge!(options))
